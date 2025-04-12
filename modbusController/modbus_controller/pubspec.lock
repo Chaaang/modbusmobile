@@ -108,7 +108,7 @@ packages:
     source: hosted
     version: "5.1.1"
   logging:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: logging
       sha256: c8245ada5f1717ed44271ed1c26b8ce85ca3228fd2ffdb75468ab01979309d61
@@ -159,10 +159,10 @@ packages:
     dependency: "direct main"
     description:
       name: modbus_client_tcp
-      sha256: "72004fd4ba29a6b1202822483498c65793120a720f367f56c05fe3d47df7d388"
+      sha256: b467e8a8b1a2f99c886b99e42d4482942a28dfcfcdfe96a8316a588a020e27e1
       url: "https://pub.dev"
     source: hosted
-    version: "1.2.1+2"
+    version: "1.2.3"
   path:
     dependency: transitive
     description:
