@@ -1,9 +1,4 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:modbus_client/modbus_client.dart';
-import 'package:modbus_client_tcp/modbus_client_tcp.dart';
-import 'package:modbus/modbus.dart';
 import 'package:modbus_controller/features/home/screens/home_screen.dart';
 
 void main() async {

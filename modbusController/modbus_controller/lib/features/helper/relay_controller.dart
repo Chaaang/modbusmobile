@@ -45,7 +45,6 @@ class RelayController {
   Future<void> toggleRelay(int relayNumber, bool turnOn) async {
     final command = _relayCommands[relayNumber]?[turnOn ? 'on' : 'off'];
     if (command == null) {
-      print('Invalid relay number or command');
       return;
     }
 

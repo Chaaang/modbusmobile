@@ -1,11 +1,9 @@
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:logging/logging.dart';
 import 'package:modbus_controller/features/home/components/my_button.dart';
 import '../../helper/relay_controller.dart';
-import 'package:modbus_client/modbus_client.dart';
-import 'package:modbus_client_tcp/modbus_client_tcp.dart';
+
+import '../components/admin_button.dart';
+import '../components/my_textfield.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,22 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
     true, // Relay 7
   ];
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    //_initializeRelayStates(); // Initialize the relay states
-  }
-
-  // Future<void> _initializeRelayStates() async {
-  //     for (int i = 0; i < _relayStates.length; i++) {
-  //       bool? status = await controller.checkRelayStatus(i);
-  //       setState(() {
-  //         _relayStates[i] = status ?? false; // Set relay state, defaulting to false if the status is null
-  //       });
-  //     }
-  //   }
-  void _onButtonPressed(int index) {
+  Future<void> _onButtonPressed(int index) async {
+    await controller.toggleRelay(index, _relayStates[index]);
     setState(() {
       _relayStates[index] = !_relayStates[index]; // Toggle relay state
     });
@@ -105,60 +89,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _logout() {
-    // Logic to log out the user
     setState(() {
       _isAdmin = false; // Reset admin mode
       _passwordController.clear(); // Clear the password field
     });
-  }
-
-  Future controlRelay() async {
-    //bool turnOn = true;
-    ModbusAppLogger(Level.ALL);
-    var serverIp = '192.168.1.200'; // Replace with your Modbus server IP
-    final modbusClient = ModbusClientTcp(serverIp, serverPort: 502, unitId: 1);
-    // Connect to the server
-    bool isConnected = await modbusClient.connect();
-    if (!isConnected) {
-      print('Failed to connect to Modbus server');
-      return;
-    }
-    print('Connected to Modbus server');
-
-    // Raw RTU frame to turn on relay 0
-    final frame = Uint8List.fromList([
-      0x01,
-      0x05,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0xCD,
-      0xCA,
-    ]);
-
-    final ip = '192.168.1.200'; // your device IP
-    final port = 502; // Modbus TCP port
-    try {
-      final socket = await Socket.connect(ip, port);
-      print('Connected to $ip:$port');
-
-      socket.add(frame);
-      print(
-        'Sent: ${frame.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
-      );
-
-      socket.listen((data) {
-        print(
-          'Response: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
-        );
-      });
-
-      await Future.delayed(Duration(seconds: 1)); // wait for response
-      await socket.close();
-    } catch (e) {
-      print('Error: $e');
-    }
   }
 
   @override
@@ -183,6 +117,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+        actions: [
+          _isAdmin
+              ? IconButton(icon: Icon(Icons.logout), onPressed: _logout)
+              : SizedBox(),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -208,140 +147,129 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(width: 200),
                       MyButton(
                         text: 'Relay 1',
-                        onTap: () async {
-                          await controller.toggleRelay(0, _relayStates[0]);
-                          setState(() {
-                            _relayStates[0] = !_relayStates[0];
-                          });
-                        },
+                        onTap: () async => await _onButtonPressed(0),
                         color:
-                            _relayStates[0] == false
+                            _relayStates[0] == true
                                 ? Colors.redAccent
                                 : Colors.green,
                       ),
                     ],
                   ),
-                  // MyButton(
-                  //   text: 'Relay 2',
-                  //   onTap: () => _onButtonPressed(1),
-                  //   color:
-                  //       _relayStates[1] == false
-                  //           ? Colors.redAccent
-                  //           : Colors.green,
-                  // ),
-                  // MyButton(
-                  //   text: 'Relay 3',
-                  //   onTap: () => _onButtonPressed(2),
-                  //   color:
-                  //       _relayStates[2] == false
-                  //           ? Colors.redAccent
-                  //           : Colors.green,
-                  // ),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     SizedBox(width: 200),
-                  //     MyButton(
-                  //       text: 'Relay 4',
-                  //       onTap: () => _onButtonPressed(3),
-                  //       color:
-                  //           _relayStates[3] == false
-                  //               ? Colors.redAccent
-                  //               : Colors.green,
-                  //     ),
-                  //   ],
-                  // ),
+                  MyButton(
+                    text: 'Relay 2',
+                    onTap: () async => await _onButtonPressed(1),
+                    color:
+                        _relayStates[1] == true
+                            ? Colors.redAccent
+                            : Colors.green,
+                  ),
+                  MyButton(
+                    text: 'Relay 3',
+                    onTap: () async => await _onButtonPressed(2),
+                    color:
+                        _relayStates[2] == true
+                            ? Colors.redAccent
+                            : Colors.green,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(width: 200),
+                      MyButton(
+                        text: 'Relay 4',
+                        onTap: () async => await _onButtonPressed(3),
+                        color:
+                            _relayStates[3] == true
+                                ? Colors.redAccent
+                                : Colors.green,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
 
-            // // Right Side: Admin Mode
-            // Expanded(
-            //   child:
-            //       _isAdmin
-            //           ? Column(
-            //             children: [
-            //               SizedBox(height: 100),
-            //               Text(
-            //                 'Admin Mode',
-            //                 style: TextStyle(
-            //                   fontSize: 36,
-            //                   fontStyle: FontStyle.italic,
-            //                 ),
-            //               ),
-            //               SizedBox(height: 100),
-            //               AdminButton(
-            //                 text: 'Relay 5',
-            //                 onTap: () => _onButtonPressed(4),
-            //                 color:
-            //                     _relayStates[4] == false
-            //                         ? Colors.redAccent
-            //                         : Colors.green,
-            //               ),
-            //               SizedBox(
-            //                 height: 100,
-            //               ), // Add spacing between containers
-            //               AdminButton(
-            //                 text: 'Relay 6',
-            //                 onTap: () => _onButtonPressed(5),
-            //                 color:
-            //                     _relayStates[5] == false
-            //                         ? Colors.redAccent
-            //                         : Colors.green,
-            //               ),
-            //               SizedBox(
-            //                 height: 100,
-            //               ), // Add spacing between containers
-            //               AdminButton(
-            //                 text: 'Relay 7',
-            //                 onTap: () => _onButtonPressed(6),
-            //                 color:
-            //                     _relayStates[6] == false
-            //                         ? Colors.redAccent
-            //                         : Colors.green,
-            //               ),
-            //               SizedBox(
-            //                 height: 100,
-            //               ), // Add spacing between containers
-            //               IconButton(
-            //                 onPressed: _logout,
-            //                 icon: Icon(Icons.arrow_forward, size: 50),
-            //               ),
-            //             ],
-            //           )
-            //           : Column(
-            //             children: [
-            //               SizedBox(height: 100),
-            //               Text(
-            //                 'Admin Mode',
-            //                 style: TextStyle(
-            //                   fontSize: 36,
-            //                   fontStyle: FontStyle.italic,
-            //                 ),
-            //               ),
-            //               SizedBox(height: 100),
-            //               Padding(
-            //                 padding: const EdgeInsets.symmetric(
-            //                   horizontal: 50.0,
-            //                 ),
-            //                 child: Row(
-            //                   children: [
-            //                     Expanded(
-            //                       child: MyTextfield(
-            //                         passwordController: _passwordController,
-            //                       ),
-            //                     ),
-            //                     SizedBox(width: 10),
-            //                     IconButton(
-            //                       onPressed: _checkPassword,
-            //                       icon: Icon(Icons.arrow_forward, size: 50),
-            //                     ),
-            //                   ],
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            // ),
+            // Right Side: Admin Mode
+            Expanded(
+              child:
+                  _isAdmin
+                      ? Column(
+                        children: [
+                          SizedBox(height: 100),
+                          Text(
+                            'Admin Mode',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          SizedBox(height: 100),
+                          AdminButton(
+                            text: 'Relay 5',
+                            onTap: () async => await _onButtonPressed(4),
+                            color:
+                                _relayStates[4] == true
+                                    ? Colors.redAccent
+                                    : Colors.green,
+                          ),
+                          SizedBox(
+                            height: 100,
+                          ), // Add spacing between containers
+                          AdminButton(
+                            text: 'Relay 6',
+                            onTap: () async => await _onButtonPressed(5),
+                            color:
+                                _relayStates[5] == true
+                                    ? Colors.redAccent
+                                    : Colors.green,
+                          ),
+                          SizedBox(
+                            height: 100,
+                          ), // Add spacing between containers
+                          AdminButton(
+                            text: 'Relay 7',
+                            onTap: () async => await _onButtonPressed(6),
+                            color:
+                                _relayStates[6] == true
+                                    ? Colors.redAccent
+                                    : Colors.green,
+                          ),
+                          SizedBox(height: 100),
+                        ],
+                      )
+                      : Column(
+                        children: [
+                          SizedBox(height: 100),
+                          Text(
+                            'Admin Mode',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          SizedBox(height: 100),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 50.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: MyTextfield(
+                                    passwordController: _passwordController,
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                IconButton(
+                                  onPressed: _checkPassword,
+                                  icon: Icon(Icons.arrow_forward, size: 50),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+            ),
           ],
         ),
       ),
