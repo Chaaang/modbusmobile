@@ -28,11 +28,42 @@ class _HomeScreenState extends State<HomeScreen> {
     true, // Relay 7
   ];
 
+  // Future<void> _onButtonPressed(int index) async {
+  //   await controller.toggleRelay(index, _relayStates[index]);
+  //   setState(() {
+  //     _relayStates[index] = !_relayStates[index]; // Toggle relay state
+  //   });
+  // }
+
   Future<void> _onButtonPressed(int index) async {
-    await controller.toggleRelay(index, _relayStates[index]);
-    setState(() {
-      _relayStates[index] = !_relayStates[index]; // Toggle relay state
-    });
+    final success = await controller.toggleRelay(index, _relayStates[index]);
+
+    if (success) {
+      setState(() {
+        _relayStates[index] = !_relayStates[index]; // Toggle relay state
+      });
+    } else {
+      // Show a snackbar or dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to toggle relay ${index + 1}',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.redAccent, // Highlight error with red
+          behavior: SnackBarBehavior.floating, // Floating style
+          margin: EdgeInsets.all(16), // Adds spacing from screen edges
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12), // Rounded corners
+          ),
+        ),
+      );
+    }
   }
 
   void _checkPassword() {

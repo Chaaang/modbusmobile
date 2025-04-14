@@ -42,14 +42,47 @@ class RelayController {
     },
   };
 
-  Future<void> toggleRelay(int relayNumber, bool turnOn) async {
+  // Future<void> toggleRelay(int relayNumber, bool turnOn) async {
+  //   final command = _relayCommands[relayNumber]?[turnOn ? 'on' : 'off'];
+  //   if (command == null) {
+  //     return;
+  //   }
+
+  //   try {
+  //     final socket = await Socket.connect(ip, port);
+  //     print('Connected to $ip:$port');
+
+  //     socket.add(Uint8List.fromList(command));
+  //     print(
+  //       'Sent: ${command.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
+  //     );
+
+  //     socket.listen((data) {
+  //       print(
+  //         'hey Response: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
+  //       );
+  //     });
+
+  //     await Future.delayed(Duration(seconds: 1));
+  //     await socket.close();
+  //   } catch (e) {
+  //     print('Error: $e');
+  //   }
+  // }
+
+  Future<bool> toggleRelay(int relayNumber, bool turnOn) async {
     final command = _relayCommands[relayNumber]?[turnOn ? 'on' : 'off'];
+
     if (command == null) {
-      return;
+      print('Invalid relay number or command not found for relay $relayNumber');
+      return false;
     }
 
     try {
-      final socket = await Socket.connect(ip, port);
+      final socket = await Socket.connect(
+        ip,
+        port,
+      ).timeout(Duration(seconds: 3));
       print('Connected to $ip:$port');
 
       socket.add(Uint8List.fromList(command));
@@ -57,16 +90,27 @@ class RelayController {
         'Sent: ${command.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
       );
 
-      socket.listen((data) {
-        print(
-          'hey Response: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
-        );
-      });
+      socket.listen(
+        (data) {
+          print(
+            'Response: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
+          );
+        },
+        onError: (error) {
+          print('Socket error: $error');
+        },
+        onDone: () {
+          print('Connection closed by server');
+        },
+        cancelOnError: true,
+      );
 
-      await Future.delayed(Duration(seconds: 1));
+      //await Future.delayed(Duration(seconds: 1));
       await socket.close();
+      return true;
     } catch (e) {
-      print('Error: $e');
+      print('Error toggling relay: $e');
+      return false;
     }
   }
 }
